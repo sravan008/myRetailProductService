@@ -5,6 +5,7 @@ import com.target.myretail.exceptions.ProductDataNotFoundException;
 import com.target.myretail.exceptions.ProductServicesException;
 import com.target.myretail.model.Product;
 import com.target.myretail.repository.ProductRepository;
+import com.target.myretail.service.ProductService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 @RestController
 @RequestMapping(value = "/")
@@ -20,12 +22,25 @@ public class ProductController {
 
     @Autowired
     ProductRepository productRepository;
+    @Autowired
+    ProductService productService;
 
     @GetMapping("v1/products")
     @ResponseBody
     public List<Product> getAllProductDetails () {
         return productRepository.findAll();
     }
+
+    // here 'g' represents global search
+    @GetMapping(value = "v1/products/g/{id}", produces = "application/json")
+    @ResponseBody
+    @ResponseStatus(HttpStatus.OK)
+    public List<Product> getProductDetailsList (@PathVariable("id")String id) {
+        log.info("Getting All the Product Details");
+        CompletableFuture<List<Product>> aggProdcutDetails=  productService.productDetailsAggregator(id);
+        return aggProdcutDetails.join();
+    }
+
 
     @GetMapping(value = "v1/products/{id}", produces = "application/json")
     @ResponseBody
